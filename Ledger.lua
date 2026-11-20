@@ -381,7 +381,7 @@ castFrame:SetScript("OnEvent", function(_, _, unit, _, spellID)
             local missing = slot.qty - found
             if missing > 0 then
                 -- Reagents you already had (or gathered) cost what they'd cost to buy now.
-                c = c + missing * (ns.BestReagentPrice(id) or 0)
+                c = c + missing * (ns.BestReagentPrice(id) or ns.db.vendor[id] or 0)
                 estimated = true
             end
             if est > 0 then estimated = true end

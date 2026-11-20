@@ -5,8 +5,9 @@ ns.name = addonName
 local log = ns.Logger("Core")
 
 local DB_DEFAULTS = {
-    version = 1,
+    version = 2,
     vendor = {},        -- [itemID] = lowest seen vendor price per unit (copper)
+    vendorUnlimited = {}, -- [itemID] = lowest price per unit at a vendor with unlimited stock (the only vendor price reagent costs use)
     vendorLimited = {}, -- [itemID] = true when the vendor only has limited stock
     vendorSource = {},  -- [itemID] = { npc, zone } of the cheapest vendor seen (for flips)
     ah = {},            -- [itemID] = avg unit price of the cheapest `ahDepth` units in the last scan (copper)
@@ -32,6 +33,7 @@ local DB_DEFAULTS = {
         flipMinProfit = 100,  -- copper per unit a flip must make to trigger the merchant alert
         flipMinROI = 0.10,    -- and profit / vendor price at least this
         ahPanel = true,       -- scan buttons docked to the AH window
+        sorts = {},           -- [tab] = { key, dir }: column sort per table
         modules = {
             ah = true,    -- craft -> sell on AH: tab, output prices in scans, tooltip line
             flips = true, -- buy from vendor -> sell on AH: tab, vendor items in scans, tooltip line
@@ -194,6 +196,18 @@ ns.On("ADDON_LOADED", function(_, loaded)
     ApplyDefaults(VendorPrinterDB, DB_DEFAULTS)
     ApplyDefaults(VendorPrinterCharDB, CHAR_DEFAULTS)
     ns.db = VendorPrinterDB
+    if (ns.db.version or 1) < 2 then
+        -- v2 keeps unlimited-stock vendor prices apart; until vendors are revisited, items not flagged limited keep theirs.
+        local copied = 0
+        for itemID, price in pairs(ns.db.vendor) do
+            if not ns.db.vendorLimited[itemID] then
+                ns.db.vendorUnlimited[itemID] = price
+                copied = copied + 1
+            end
+        end
+        ns.db.version = 2
+        log.info("Data upgraded to v2: %d vendor prices kept as unlimited stock", copied)
+    end
     ns.char = VendorPrinterCharDB
 
     local version, build, _, interface = GetBuildInfo()
@@ -356,6 +370,7 @@ SlashCmdList.VENDORPRINTER = function(input)
         end
     elseif cmd == "reset" then
         wipe(ns.db.vendor)
+        wipe(ns.db.vendorUnlimited)
         wipe(ns.db.vendorLimited)
         wipe(ns.db.vendorSource)
         wipe(ns.db.ahListed)

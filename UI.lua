@@ -21,6 +21,26 @@ local HEADERS = {
 
 local frame, scroll, content, statusText, scanButton, reagentButton, emptyText
 local headers, tabButtons = {}, {}
+local GetItemInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
+
+-- Column sort, one per tab; header keys in column order.
+local SORT_KEYS = { "name", "cost", "sell", "profit", "roi" }
+local SORT_GETTERS = {
+    recipe = {
+        name = function(d) return (d.recipe.name or ""):lower() end,
+        cost = function(d) return d.complete and d.cost or nil end,
+        sell = function(d) return d.revenue end,
+        profit = function(d) return d.profit end,
+        roi = function(d) return d.roi end,
+    },
+    flip = {
+        name = function(d) return (d.name or GetItemInfo(d.itemID) or ""):lower() end,
+        cost = function(d) return d.buy end,
+        sell = function(d) return d.net end,
+        profit = function(d) return d.profit end,
+        roi = function(d) return d.roi end,
+    },
+}
 local rowPool = {}
 local stats = { vendor = 0, ah = 0 }
 
@@ -267,7 +287,10 @@ local function UpdateTabs()
         button:SetText(tab.key == current and ("[" .. tab.label .. "]") or tab.label)
         if tab.key == current then button:LockHighlight() else button:UnlockHighlight() end
     end
-    for i, text in ipairs(HEADERS[current]) do headers[i]:SetText(text) end
+    for i, text in ipairs(HEADERS[current]) do
+        headers[i]:SetLabel(text)
+        headers[i]:Refresh()
+    end
 end
 
 local function RenderRecipeRow(row, data)
@@ -320,6 +343,7 @@ local function UpdateList()
     else
         rows, kind = ns.BuildRows(tab), "recipe"
     end
+    ns.SortRows(rows, ns.TableSortState(tab), SORT_GETTERS[kind])
     for i, data in ipairs(rows) do
         local row = GetRow(i)
         row.data, row.kind = data, kind
@@ -373,14 +397,27 @@ local function CreateInput(label, x, width)
     return box
 end
 
-local function Header(x, justify)
-    local fs = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+function ns.TableSortState(tab)
+    local sorts = ns.db.settings.sorts
+    sorts[tab] = sorts[tab] or {}
+    return sorts[tab]
+end
+
+-- Sortable column header; the sort is kept per tab.
+local function Header(index, x, width, justify)
+    local header = ns.SortHeader({ parent = frame, key = SORT_KEYS[index], width = width, justify = justify,
+        getState = function() return ns.TableSortState(CurrentTab()) end,
+        onChange = function()
+            local state = ns.TableSortState(CurrentTab())
+            log.info("Sort %s: %s %s", CurrentTab(), tostring(state.key), tostring(state.dir))
+            UpdateList()
+        end })
     if justify == "LEFT" then
-        fs:SetPoint("TOPLEFT", frame, "TOPLEFT", x, LIST_TOP + 16)
+        header:SetPoint("TOPLEFT", frame, "TOPLEFT", x, LIST_TOP + 18)
     else
-        fs:SetPoint("TOPRIGHT", frame, "TOPLEFT", x, LIST_TOP + 16)
+        header:SetPoint("TOPRIGHT", frame, "TOPLEFT", x, LIST_TOP + 18)
     end
-    return fs
+    return header
 end
 
 local function SimpleTooltip(button, title, body)
@@ -488,11 +525,11 @@ local function CreateWindow()
     end
 
     -- Column headers line up with row columns (rows start at x = 12 inside the frame).
-    headers[1] = Header(16, "LEFT")
-    headers[2] = Header(12 + COL.costRight)
-    headers[3] = Header(12 + COL.sellRight)
-    headers[4] = Header(12 + COL.profitRight)
-    headers[5] = Header(12 + COL.pctRight)
+    headers[1] = Header(1, 16, COL.nameWidth, "LEFT")
+    headers[2] = Header(2, 12 + COL.costRight, COL.moneyWidth, "RIGHT")
+    headers[3] = Header(3, 12 + COL.sellRight, COL.moneyWidth, "RIGHT")
+    headers[4] = Header(4, 12 + COL.profitRight, COL.moneyWidth, "RIGHT")
+    headers[5] = Header(5, 12 + COL.pctRight, COL.pctWidth, "RIGHT")
 
     scroll = CreateFrame("ScrollFrame", nil, frame, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", frame, "TOPLEFT", 12, LIST_TOP)

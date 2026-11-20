@@ -23,7 +23,7 @@ Modules toggle with `/vp module ah|flips [on|off]`; off removes the tab, the ext
 1. Open each profession window once (records learned and unlearned recipes).
 2. Visit merchants: their prices are recorded automatically.
 3. Open the Auction House: prices update automatically (see "AH scanning" below).
-4. `/vp` opens the list, sorted by profit per craft. Hover for reagent breakdown and how to learn. Click a recipe row to open its profession window on that recipe (`C_TradeSkillUI.OpenRecipe`, which needs the click as a hardware event; not in combat) and get a shopping list in chat.
+4. `/vp` opens the list, sorted by profit per craft. Click a column header to sort by it: ascending, descending, then back to the default (kept per tab). Hover for reagent breakdown and how to learn. Click a recipe row to open its profession window on that recipe (`C_TradeSkillUI.OpenRecipe`, which needs the click as a hardware event; not in combat) and get a shopping list in chat.
 5. At a vendor, **Alt+click** an item to buy any amount: type e.g. 193 and the addon makes the purchases (one purchase is capped at a stack, usually 20, so 193 = 9 x 20 + 1 x 13). A progress bar shows how far it got; it stops by itself when the vendor sells out, money runs out, or items stop arriving (bags full), and prints what it bought.
 
 Commands: `/vp`, `/vp report`, `/vp scan`, `/vp reagents`, `/vp depth <n>`, `/vp progress <milestones|all|off>`, `/vp tooltip`, `/vp module ah|flips [on|off]`, `/vp merchant [on|off]`, `/vp sound`, `/vp flipmin <silver> [percent]`, `/vp ahpanel`, `/vp log ...`, `/vp debug`, `/vp reset`, `/vp forget`, `/vp help`.
@@ -78,6 +78,7 @@ Long actions (both scans) show a movable on-screen bar (`Progress.lua`) with pha
 ## How prices work
 
 - Vendor price: lowest seen per unit. Items with limited stock are flagged.
+- Reagent cost uses only vendors with unlimited stock (`vendorUnlimited`). A reagent sold only in limited amounts (Earthroot, basic fish...) is priced from the AH, or shows "missing prices" without one. Tooltips and flips still show the limited vendor price, marked "limited stock".
 - AH price: average unit price of the cheapest `depth` units (default 20), so one cheap listing doesn't fake a margin. Fewer units listed than `depth` is flagged ("only N on AH").
 - Revenue: vendor sell price x average output quantity.
 - Recipes with any unpriced reagent show "missing prices" (hide with the checkbox).
@@ -97,6 +98,7 @@ Every meaningful action is logged (events, scan decisions and their reasons, per
 | --- | --- |
 | `Log.lua` | Leveled, timestamped logger persisted to `VendorPrinterLog`; `SafeCall` error capture; `/vp log` commands |
 | `Core.lua` | Namespace, SavedVariables defaults, event dispatch (errors logged), helpers, slash commands, `/vp debug` |
+| `Sort.lua` | Clickable column headers (ascending, descending, off) and the stable row sort |
 | `Progress.lua` | On-screen progress bar, chat milestones, ETA for long actions |
 | `Prices.lua` | Merchant price recording, full AH scan (chunked, depth price, timeout), reagent scan (throttle-aware queue), auto-scan choice |
 | `Recipes.lua` | Reads the open profession window, merges into per-character data; opens a recipe from a row click |

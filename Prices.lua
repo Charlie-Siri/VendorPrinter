@@ -31,7 +31,7 @@ local function GetMerchantEntry(index)
 end
 
 local function ScanMerchant()
-    local vendor, limited, sources = ns.db.vendor, ns.db.vendorLimited, ns.db.vendorSource
+    local vendor, limited, sources, unlimited = ns.db.vendor, ns.db.vendorLimited, ns.db.vendorSource, ns.db.vendorUnlimited
     local count = GetMerchantNumItems()
     local added, lowered, skipped = 0, 0, 0
     local npc = UnitName("npc") or "?"
@@ -59,6 +59,9 @@ local function ScanMerchant()
             -- Where to buy it (for flips): the vendor with the lowest price seen.
             if vendor[itemID] == unit then sources[itemID] = { npc = npc, zone = zone } end
             -- numAvailable is -1 for unlimited stock.
+            if not (numAvailable and numAvailable >= 0) and (unlimited[itemID] == nil or unit < unlimited[itemID]) then
+                unlimited[itemID] = unit
+            end
             if numAvailable and numAvailable >= 0 then
                 if not limited[itemID] then log.debug("Item %s is limited stock (%d available)", ItemLabel(itemID), numAvailable) end
                 limited[itemID] = true

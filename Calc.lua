@@ -6,9 +6,10 @@ local lastSummary = {}
 
 ns.AH_CUT = 0.05   -- the AH keeps 5% of the sale price
 
--- Cheapest known unit price for an item and where it comes from.
+-- Cheapest known unit price for an item and where it comes from. Vendors with limited stock
+-- (herbs, fish...) don't count: you can't buy enough there to craft in bulk.
 function ns.BestReagentPrice(itemID)
-    local v = ns.db.vendor[itemID]
+    local v = ns.db.vendorUnlimited[itemID]
     local a = ns.db.ah[itemID]
     if v and a then
         if v <= a then return v, "Vendor" end
@@ -41,9 +42,7 @@ function ns.Evaluate(recipe, mode)
         end
         local itemID = bestID or slot.ids[1]
         local part = { itemID = itemID, qty = slot.qty, unit = best, source = source }
-        if source == "Vendor" and ns.db.vendorLimited[itemID] then
-            part.warning = "limited vendor stock"
-        elseif source == "AH" and (ns.db.ahSupply[itemID] or 0) < (ns.db.settings.ahDepth or 20) then
+        if source == "AH" and (ns.db.ahSupply[itemID] or 0) < (ns.db.settings.ahDepth or 20) then
             part.warning = ("only %d on AH"):format(ns.db.ahSupply[itemID] or 0)
         elseif source == "AH" and ns.db.ahQuick[itemID] then
             part.warning = "cheapest listing only"

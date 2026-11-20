@@ -1,0 +1,18 @@
+## Interface: 16001
+## Title: Vendor Printer
+## Notes: Finds recipes that make money when you buy reagents (AH or vendor, whichever is cheaper) and sell the result to a vendor.
+## Version: 0.1.0
+## SavedVariables: VendorPrinterDB, VendorPrinterLog
+## SavedVariablesPerCharacter: VendorPrinterCharDB
+
+Log.lua
+Core.lua
+Progress.lua
+Prices.lua
+Recipes.lua
+Calc.lua
+Tooltip.lua
+UI.lua
+Merchant.lua
+BulkBuy.lua
+AHPanel.lua

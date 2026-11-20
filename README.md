@@ -26,7 +26,7 @@ Modules toggle with `/vp module ah|flips [on|off]`; off removes the tab, the ext
 4. `/vp` opens the list, sorted by profit per craft. Hover for reagent breakdown and how to learn. Click a recipe row to open its profession window on that recipe (`C_TradeSkillUI.OpenRecipe`, which needs the click as a hardware event; not in combat) and get a shopping list in chat.
 5. At a vendor, **Alt+click** an item to buy any amount: type e.g. 193 and the addon makes the purchases (one purchase is capped at a stack, usually 20, so 193 = 9 x 20 + 1 x 13). A progress bar shows how far it got; it stops by itself when the vendor sells out, money runs out, or items stop arriving (bags full), and prints what it bought.
 
-Commands: `/vp`, `/vp scan`, `/vp reagents`, `/vp depth <n>`, `/vp progress <milestones|all|off>`, `/vp tooltip`, `/vp module ah|flips [on|off]`, `/vp merchant [on|off]`, `/vp sound`, `/vp flipmin <silver> [percent]`, `/vp ahpanel`, `/vp log ...`, `/vp debug`, `/vp reset`, `/vp forget`, `/vp help`.
+Commands: `/vp`, `/vp report`, `/vp scan`, `/vp reagents`, `/vp depth <n>`, `/vp progress <milestones|all|off>`, `/vp tooltip`, `/vp module ah|flips [on|off]`, `/vp merchant [on|off]`, `/vp sound`, `/vp flipmin <silver> [percent]`, `/vp ahpanel`, `/vp log ...`, `/vp debug`, `/vp reset`, `/vp forget`, `/vp help`.
 
 ## AH scanning
 
@@ -41,6 +41,19 @@ Reagent scan passes:
 Without `SearchForItemKeys` the scan falls back to detail-checking every reagent.
 
 Auto-scan on AH open: full scan if off cooldown, else a reagent scan if the newest prices are older than 10 minutes. A reagent scan stops when the AH closes or a full scan starts; clicking its button again stops it. A reagent with zero listings has its old AH price removed; unanswered items keep their old price and a warning is printed. Note: reagent searches can show up in Blizzard's AH browse pane while running.
+
+## Earnings report (`Ledger.lua`, `Report.lua`)
+
+`/vp report` (or Earnings in the main window) shows the profit you actually made: today, last 7 and 30 days and all time, split by activity (craft and sell to a vendor, craft and sell on the AH, vendor-to-AH flips, other resales), your best items, and recent transactions.
+
+How it counts:
+- **Purchases** of reagents of your recipes (vendor or AH) and of vendor items with an AH price are recorded at the price paid. A purchase counts only once your money actually drops, so refused ones (bags full, no money) don't count.
+- **Crafts** of your recorded recipes move the reagents' cost into the product (oldest stock first). Reagents you didn't buy while tracking (owned before, gathered, looted) are costed at today's cheapest price. The report shows what share of costs is estimated this way.
+- **Sales** to a vendor (right-click at a merchant) and on the AH (the "Auction successful" mail's invoice: sale price minus the 5% cut, deposit refund excluded) book profit = revenue - cost of the units sold. Units not bought or crafted while tracking aren't counted.
+
+Hooks: `BuyMerchantItem`, `C_Container.UseContainerItem`, `C_AuctionHouse.StartCommoditiesPurchase` / `COMMODITY_PRICE_UPDATED` / `COMMODITY_PURCHASE_SUCCEEDED`, `C_AuctionHouse.PlaceBid`, `TakeInboxMoney` / `AutoLootMailItem` with `GetInboxInvoiceInfo`, `UNIT_SPELLCAST_SUCCEEDED` (recipe ID = spell ID) + `BAG_UPDATE_DELAYED` for the product count. All `hooksecurefunc` (no taint). Data: `VendorPrinterCharDB.ledger` (per character: stock lots, last 1000 transactions, daily and per-item totals). Reset clears it.
+
+Limits: items used, destroyed or mailed away stay in "unsold stock" at cost; buying back a sold item counts as a new purchase; AH sales collected before this version aren't counted.
 
 ## Vendor flip alerts (`Merchant.lua`)
 
@@ -88,13 +101,15 @@ Every meaningful action is logged (events, scan decisions and their reasons, per
 | `Prices.lua` | Merchant price recording, full AH scan (chunked, depth price, timeout), reagent scan (throttle-aware queue), auto-scan choice |
 | `Recipes.lua` | Reads the open profession window, merges into per-character data; opens a recipe from a row click |
 | `Calc.lua` | Cheapest source per reagent, profit/ROI, filters + sort, shopping lists |
+| `Ledger.lua` | Earnings ledger: purchases, crafts and sales confirmed by money changes, stock lots, profit per activity |
 | `Tooltip.lua` | Prices + recipe usage on item tooltips (reagent usage index rebuilt when recipes change) |
 | `Merchant.lua` | Vendor flip alerts: item button glow, side panel, chat line + sound |
 | `BulkBuy.lua` | Alt+click amount box at vendors; splits big purchases into stack-sized ones |
 | `AHPanel.lua` | Scan buttons docked to the AH window |
 | `UI.lua` | Window, rows, tooltips, search, crafts box, status bar |
+| `Report.lua` | Earnings window (`/vp report`): profit per period and activity, best items, recent transactions |
 
-SavedVariables: `VendorPrinterDB` (account: prices, settings), `VendorPrinterCharDB` (character: recipes).
+SavedVariables: `VendorPrinterDB` (account: prices, settings), `VendorPrinterCharDB` (character: recipes, earnings ledger).
 
 ## Status
 

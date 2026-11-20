@@ -239,6 +239,9 @@ local API_CHECKS = {
     "C_Item.GetItemInfo|GetItemInfo", "C_Item.RequestLoadItemDataByID", "GetMoneyString",
     "TooltipDataProcessor.AddTooltipPostCall|GameTooltip.HookScript",
     "MerchantFrame_UpdateMerchantInfo", "C_Item.GetItemIconByID",
+    -- Earnings ledger
+    "BuyMerchantItem", "C_Container.UseContainerItem", "C_AuctionHouse.StartCommoditiesPurchase",
+    "C_AuctionHouse.PlaceBid", "TakeInboxMoney", "AutoLootMailItem", "GetInboxHeaderInfo", "GetInboxInvoiceInfo",
 }
 
 local function Resolve(path)
@@ -291,6 +294,8 @@ SlashCmdList.VENDORPRINTER = function(input)
         ns.StartAHScan(true)
     elseif cmd == "reagents" then
         ns.StartReagentScan(true)
+    elseif cmd == "report" or cmd == "earnings" then
+        ns.ToggleReport()
     elseif cmd == "debug" then
         ns.PrintDebug()
     elseif cmd:match("^module") then
@@ -372,6 +377,7 @@ SlashCmdList.VENDORPRINTER = function(input)
         print("  /vp - toggle the window")
         print("  /vp scan - full AH scan (AH must be open, once per 15 min)")
         print("  /vp reagents - scan only your recipes' reagents (no cooldown; run again to stop)")
+        print("  /vp report - earnings: real profit from what you bought, crafted and sold")
         print("  /vp depth <n> - average the AH price over the cheapest n units (default 20)")
         print("  /vp progress <milestones|all|off> - chat updates during scans (every 10%, every item, none)")
         print("  /vp tooltip - toggle prices on item tooltips")

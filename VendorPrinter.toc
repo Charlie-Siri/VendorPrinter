@@ -11,8 +11,10 @@ Progress.lua
 Prices.lua
 Recipes.lua
 Calc.lua
+Ledger.lua
 Tooltip.lua
 UI.lua
+Report.lua
 Merchant.lua
 BulkBuy.lua
 AHPanel.lua

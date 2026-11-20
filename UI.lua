@@ -508,6 +508,13 @@ local function CreateWindow()
     statusText = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     statusText:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 14, 12)
 
+    local earnings = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    earnings:SetSize(90, 20)
+    earnings:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -12, 8)
+    earnings:SetText("Earnings")
+    earnings:SetScript("OnClick", function() ns.ToggleReport() end)
+    SimpleTooltip(earnings, "Earnings", "Real profit from what you bought, crafted and sold (/vp report).")
+
     frame:SetScript("OnShow", UpdateList)
     -- Keep the scan button's cooldown and "scanned ... ago" ticking while open.
     local elapsed = 0

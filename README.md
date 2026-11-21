@@ -26,6 +26,8 @@ Modules toggle with `/vp module ah|flips [on|off]`; off removes the tab, the ext
 4. `/vp` opens the list, sorted by profit per craft. Click a column header to sort by it: ascending, descending, then back to the default (kept per tab). Hover for reagent breakdown and how to learn. Click a recipe row to open its profession window on that recipe (`C_TradeSkillUI.OpenRecipe`, which needs the click as a hardware event; not in combat) and get a shopping list in chat.
 5. At a vendor, **Alt+click** an item to buy any amount: type e.g. 193 and the addon makes the purchases (one purchase is capped at a stack, usually 20, so 193 = 9 x 20 + 1 x 13). A progress bar shows how far it got; it stops by itself when the vendor sells out, money runs out, or items stop arriving (bags full), and prints what it bought.
 
+Both windows (`/vp` and `/vp report`) resize by dragging the grip in their bottom-right corner; the size is saved. The main window's name column takes the extra width (minimum 640x300); the earnings window grows from its normal size and shows more recent transactions when taller.
+
 Commands: `/vp`, `/vp report`, `/vp scan`, `/vp reagents`, `/vp depth <n>`, `/vp progress <milestones|all|off>`, `/vp tooltip`, `/vp module ah|flips [on|off]`, `/vp merchant [on|off]`, `/vp sound`, `/vp flipmin <silver> [percent]`, `/vp ahpanel`, `/vp log ...`, `/vp debug`, `/vp reset`, `/vp forget`, `/vp help`.
 
 ## AH scanning
@@ -98,6 +100,7 @@ Every meaningful action is logged (events, scan decisions and their reasons, per
 | --- | --- |
 | `Log.lua` | Leveled, timestamped logger persisted to `VendorPrinterLog`; `SafeCall` error capture; `/vp log` commands |
 | `Core.lua` | Namespace, SavedVariables defaults, event dispatch (errors logged), helpers, slash commands, `/vp debug` |
+| `Resize.lua` | `ns.MakeResizable`: bottom-right drag grip, resize bounds, saved window size |
 | `Sort.lua` | Clickable column headers (ascending, descending, off) and the stable row sort |
 | `Progress.lua` | On-screen progress bar, chat milestones, ETA for long actions |
 | `Prices.lua` | Merchant price recording, full AH scan (chunked, depth price, timeout), reagent scan (throttle-aware queue), auto-scan choice |

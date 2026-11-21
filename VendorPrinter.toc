@@ -7,6 +7,7 @@
 
 Log.lua
 Core.lua
+Resize.lua
 Sort.lua
 Progress.lua
 Prices.lua

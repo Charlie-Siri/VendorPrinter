@@ -7,6 +7,11 @@ local WIDTH, HEIGHT = 740, 480
 local ROW_H = 20
 local LIST_TOP = -102
 local COL = { nameWidth = 250, costRight = 380, sellRight = 490, profitRight = 600, pctRight = 668, moneyWidth = 108, pctWidth = 62 }
+local MIN_WIDTH, MIN_HEIGHT = 640, 300   -- narrower and the top-row checkboxes run into the scan buttons
+-- COL is laid out for a row this wide; columns keep their distance from the row's right edge, so the name column
+-- takes any extra width when the window is resized.
+local ROW_W = WIDTH - 50
+local function FromRight(x) return x - ROW_W end
 
 local TABS = {
     { key = "vendor", label = "Vendor", tip = "Craft, then sell to a vendor (the original Vendor Printer view)." },
@@ -222,20 +227,20 @@ local function GetRow(i)
 
     row.name = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     row.name:SetPoint("LEFT", row, "LEFT", 4, 0)
-    row.name:SetWidth(COL.nameWidth)
+    row.name:SetPoint("RIGHT", row, "RIGHT", FromRight(4 + COL.nameWidth), 0)
     row.name:SetJustifyH("LEFT")
     row.name:SetWordWrap(false)
 
     row.cost = MoneyText(row)
-    row.cost:SetPoint("RIGHT", row, "LEFT", COL.costRight, 0)
+    row.cost:SetPoint("RIGHT", row, "RIGHT", FromRight(COL.costRight), 0)
     row.sell = MoneyText(row)
-    row.sell:SetPoint("RIGHT", row, "LEFT", COL.sellRight, 0)
+    row.sell:SetPoint("RIGHT", row, "RIGHT", FromRight(COL.sellRight), 0)
     row.profit = MoneyText(row)
-    row.profit:SetPoint("RIGHT", row, "LEFT", COL.profitRight, 0)
+    row.profit:SetPoint("RIGHT", row, "RIGHT", FromRight(COL.profitRight), 0)
     row.pct = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     row.pct:SetWidth(COL.pctWidth)
     row.pct:SetJustifyH("RIGHT")
-    row.pct:SetPoint("RIGHT", row, "LEFT", COL.pctRight, 0)
+    row.pct:SetPoint("RIGHT", row, "RIGHT", FromRight(COL.pctRight), 0)
 
     row:SetScript("OnEnter", ShowTooltip)
     row:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -415,7 +420,7 @@ local function Header(index, x, width, justify)
     if justify == "LEFT" then
         header:SetPoint("TOPLEFT", frame, "TOPLEFT", x, LIST_TOP + 18)
     else
-        header:SetPoint("TOPRIGHT", frame, "TOPLEFT", x, LIST_TOP + 18)
+        header:SetPoint("TOPRIGHT", frame, "TOPRIGHT", x - WIDTH, LIST_TOP + 18)   -- follows the columns on resize
     end
     return header
 end
@@ -536,8 +541,9 @@ local function CreateWindow()
     scroll:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -32, 32)
 
     content = CreateFrame("Frame", nil, scroll)
-    content:SetSize(WIDTH - 50, 1)
+    content:SetSize(ROW_W, 1)
     scroll:SetScrollChild(content)
+    frame:HookScript("OnSizeChanged", function(_, w) content:SetWidth(w - (WIDTH - ROW_W)) end)   -- rows follow resizing
 
     emptyText = frame:CreateFontString(nil, "OVERLAY", "GameFontDisable")
     emptyText:SetPoint("CENTER", scroll, "CENTER")
@@ -547,7 +553,8 @@ local function CreateWindow()
 
     local earnings = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
     earnings:SetSize(90, 20)
-    earnings:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -12, 8)
+    earnings:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -24, 8)   -- clear of the resize grip
+    ns.MakeResizable(frame, ns.db.settings.window, MIN_WIDTH, MIN_HEIGHT)
     earnings:SetText("Earnings")
     earnings:SetScript("OnClick", function() ns.ToggleReport() end)
     SimpleTooltip(earnings, "Earnings", "Real profit from what you bought, crafted and sold (/vp report).")

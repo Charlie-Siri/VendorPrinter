@@ -34,6 +34,8 @@ local DB_DEFAULTS = {
         flipMinROI = 0.10,    -- and profit / vendor price at least this
         ahPanel = true,       -- scan buttons docked to the AH window
         sorts = {},           -- [tab] = { key, dir }: column sort per table
+        window = {},          -- { w, h }: main window size after resizing
+        reportWindow = {},    -- { w, h }: earnings window size after resizing
         modules = {
             ah = true,    -- craft -> sell on AH: tab, output prices in scans, tooltip line
             flips = true, -- buy from vendor -> sell on AH: tab, vendor items in scans, tooltip line

@@ -4,7 +4,9 @@ local log = ns.Logger("Report")
 
 local WIDTH, HEIGHT = 560, 530
 local ROW_H = 16
-local BEST_ROWS, RECENT_ROWS = 6, 8
+local BEST_ROWS, RECENT_ROWS = 6, 40   -- recent rows shown: as many as the window's height fits
+local RECENT_TOP = -372                -- y of the first recent row
+local BOTTOM_SPACE = 30                -- footer and Reset button below the list
 local GREEN, RED, GREY = "|cff40ff40", "|cffff5050", "|cff9d9d9d"
 
 local frame
@@ -123,8 +125,9 @@ local function CreateWindow()
     Heading("Best items", -228)
     for i = 1, BEST_ROWS do
         local row = CreateFrame("Button", nil, frame)
-        row:SetSize(WIDTH - 40, ROW_H)
+        row:SetHeight(ROW_H)
         row:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -248 - (i - 1) * ROW_H)
+        row:SetPoint("RIGHT", frame, "RIGHT", -20, 0)
         local highlight = row:CreateTexture(nil, "HIGHLIGHT")
         highlight:SetAllPoints()
         highlight:SetColorTexture(1, 1, 1, 0.08)
@@ -150,21 +153,23 @@ local function CreateWindow()
     for i = 1, RECENT_ROWS do
         local row = {}
         row.ago = Text(frame, "GameFontDisableSmall", "RIGHT")
-        row.ago:SetPoint("TOPRIGHT", frame, "TOPLEFT", 44, -372 - (i - 1) * ROW_H)
+        row.ago:SetPoint("TOPRIGHT", frame, "TOPLEFT", 44, RECENT_TOP - (i - 1) * ROW_H)
         row.ago:SetWidth(26)
         row.text = Text(frame)
-        row.text:SetPoint("TOPLEFT", frame, "TOPLEFT", 52, -372 - (i - 1) * ROW_H)
-        row.text:SetWidth(WIDTH - 72)
+        row.text:SetPoint("TOPLEFT", frame, "TOPLEFT", 52, RECENT_TOP - (i - 1) * ROW_H)
+        row.text:SetPoint("RIGHT", frame, "RIGHT", -20, 0)
         recentRows[i] = row
     end
 
     footer = Text(frame, "GameFontDisableSmall")
     footer:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 14, 12)
-    footer:SetWidth(WIDTH - 130)
 
     local reset = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
     reset:SetSize(90, 20)
-    reset:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -12, 8)
+    reset:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -24, 8)   -- clear of the resize grip
+    footer:SetPoint("RIGHT", reset, "LEFT", -8, 0)
+    -- The summary tables have a fixed layout, so the window only grows: extra height shows more recent rows.
+    ns.MakeResizable(frame, ns.db.settings.reportWindow, WIDTH, HEIGHT, function() ns.RefreshReport() end)
     reset:SetText("Reset")
     reset:SetScript("OnClick", function()
         StaticPopupDialogs.VENDORPRINTER_RESET_LEDGER = StaticPopupDialogs.VENDORPRINTER_RESET_LEDGER or {
@@ -226,8 +231,9 @@ function ns.UpdateReport()
         bestRows[1]:Show()
     end
 
+    local fits = math.floor((frame:GetHeight() + RECENT_TOP - BOTTOM_SPACE) / ROW_H)
     for i, row in ipairs(recentRows) do
-        local tx = L.tx[#L.tx - i + 1]
+        local tx = i <= fits and L.tx[#L.tx - i + 1]
         if tx then
             row.ago:SetText(Ago(tx.t))
             row.text:SetText(TxText(tx))
